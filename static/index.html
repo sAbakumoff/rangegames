@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Game of ranges</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" 
+integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+<style>
+#container{
+    width : 50%;
+}
+table.range{
+    cursor : pointer;
+}
+table.range td{
+    text-align:  center;
+}
+</style>
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div id="container" class="container">
+        <div class="row justify-content-center mt-4">
+            <h1 id="range"></h1>
+        </div>
+        <div class="row justify-content-center mb-4">
+            <button type="button" id="btnShowPercent" class="btn btn-primary" style="display:none">Show Percent</button>
+            <button type="button" id="btnNext" class="btn btn-success" style="display:none">Next range</button>
+        </div>
+        <div id="tableContainer" class="row">
+        </div>
+        <div class="row justify-content-center">           
+        </div>
+    </div>
+    <script type="text/javascript">
+        var currentRange = null;
+        var controlSum = 0;
+        var rangePercent = 0;
+
+        function worker(){
+            $('#btnNext, #btnShowPercent').hide();
+            $('table.range td').removeClass('bg-primary checked bg-danger');
+            $.get('/range', function(range){
+                currentRange = $(range.rgHtml);
+                $('#range').html(range.rgText);
+                controlSum = currentRange.find("td:not(:empty)").length;
+                rangePercent = range.percent;
+            });
+        }
+        
+        $(function(){
+            $.get('/range0', function succeess(range0){
+                $('#tableContainer').html(range0);
+                $('table.range').addClass('table table-bordered table-dark');
+                worker();
+            });
+            $('#btnNext').on('click', function(){
+                worker();
+            })
+            $('#btnShowPercent').on('click', function(){
+                $('#range').html(rangePercent + '%');
+            })
+            $('#tableContainer').on('click', 'table.range td', function(ev){ 
+                var col = $(this).closest("td").index();
+                var row = $(this).closest("tr").index();
+                var checkit = currentRange.find('tr').eq(row).find('td').eq(col).html();
+                if(checkit && checkit.length){
+                    $(this).toggleClass('bg-primary checked');
+                    if($('table.range td.checked').length === controlSum){
+                        $('#btnShowPercent, #btnNext').show();
+                    }
+                }
+                else{
+                    $(this).toggleClass('bg-danger');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
