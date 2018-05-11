@@ -24,3 +24,5 @@ TT+, AKs, AKo
 22+, Kx+, Q6s+, Q8o+, J8s+, J9o+, T7s+, T9o, 97s+, 86s+, 76s
 22+, A2s+, A7o+, KTs+, KJo+, QTs+
 22+, A2s+, A4o+, K7s+, KTo+, Q9s+, QJo, J8s+, JTo, T8s+, 98s, 87s
+33+, A4s+, A7o+, KTs+, KJo+, QJs
+22+, A2s+, A3o+, K6s+, KTo+, Q8s+, QTo+, J8s+, JTo, T8s+, 97s+, 87s, 76s 
