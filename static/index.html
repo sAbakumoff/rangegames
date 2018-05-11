@@ -6,9 +6,6 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" 
 integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 <style>
-#container{
-    width : 50%;
-}
 table.range{
     cursor : pointer;
 }
@@ -28,27 +25,39 @@ table.range td{
             <h1 id="range"></h1>
         </div>
         <div class="row justify-content-center mb-4">
-            <button type="button" id="btnShowPercent" class="btn btn-primary" style="display:none">Show Percent</button>
             <button type="button" id="btnNext" class="btn btn-success" style="display:none">Next range</button>
         </div>
-        <div id="tableContainer" class="row">
-        </div>
-        <div class="row justify-content-center">           
+        <div class="row">
+            <div class="col" id="tableContainer">
+            </div>
+            <div class="col">
+                <button type="button" id="btnShowPercent" class="btn btn-primary" style="display:none">Show Outline</button>
+                <ul id="outline" style="display:none">
+                    
+                </ul>
+            </div>
         </div>
     </div>
     <script type="text/javascript">
         var currentRange = null;
         var controlSum = 0;
-        var rangePercent = 0;
+        var rangeCombos = 0;
+        var pairs = 0;
+        var suited = 0;
+        var offsuited = 0;
 
         function worker(){
-            $('#btnNext, #btnShowPercent').hide();
-            $('table.range td').removeClass('bg-primary checked bg-danger');
+            $('#btnNext, #btnShowPercent, #outline').hide();
+            $('table.range td').removeClass('bg-primary checked bg-danger bg-success bg-info');
             $.get('/range', function(range){
+                range = JSON.parse(range)
                 currentRange = $(range.rgHtml);
                 $('#range').html(range.rgText);
                 controlSum = currentRange.find("td:not(:empty)").length;
-                rangePercent = range.percent;
+                rangeCombos = range.combos;
+                pairs = range.pairs;
+                suited = range.suited;
+                offsuited = range.offsuited;
             });
         }
         
@@ -62,14 +71,19 @@ table.range td{
                 worker();
             })
             $('#btnShowPercent').on('click', function(){
-                $('#range').html(rangePercent + '%');
+                $('#outline').show().html('<li>Combos :' + rangeCombos + '</li><li class="text-primary">Pairs : ' + pairs + '</li><li class="text-success">Suited : ' + suited + '</li><li class="text-info">Offsuit : ' + offsuited + '</li>');
             })
             $('#tableContainer').on('click', 'table.range td', function(ev){ 
                 var col = $(this).closest("td").index();
                 var row = $(this).closest("tr").index();
                 var checkit = currentRange.find('tr').eq(row).find('td').eq(col).html();
                 if(checkit && checkit.length){
-                    $(this).toggleClass('bg-primary checked');
+                    if($(this).hasClass('suited'))
+                        $(this).toggleClass('bg-success checked');
+                    if($(this).hasClass('offsuit'))
+                        $(this).toggleClass('bg-info checked');
+                    if($(this).hasClass('pair'))
+                        $(this).toggleClass('bg-primary checked');
                     if($('table.range td.checked').length === controlSum){
                         $('#btnShowPercent, #btnNext').show();
                     }

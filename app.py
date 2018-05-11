@@ -1,14 +1,15 @@
 from flask import Flask, jsonify
-from poker import Range
+from poker import Range, Combo, Hand
 import random
+import json
+from encoder import *
 
 app = Flask(__name__)
 
-ranges = []
-ranges.append('JJ+, AK+')
-ranges.append('77+, AQ+')
-ranges.append('55+, ATo+, A8s+, A5s')
-
+with open('ranges.txt') as f:
+    ranges = f.readlines()
+# you may also want to remove whitespace characters like `\n` at the end of each line
+ranges = [x.strip() for x in ranges] 
 
 @app.route("/")
 def serve_index():
@@ -17,12 +18,8 @@ def serve_index():
 @app.route("/range")
 def serve_range():
     rgText = random.choice(ranges)
-    rgObj = Range(rgText)
-    return jsonify(
-        rgText = rgText,
-        rgHtml = rgObj.to_html(),
-        percent = rgObj.percent
-    )
+    rgObj = RangeWrapper(rgText)
+    return json.dumps(rgObj, cls=MyEncoder)
 
 @app.route("/range0")
 def serve_range0():
