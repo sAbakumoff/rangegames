@@ -21,20 +21,8 @@ table.range td{
 
 <body>
     <div id="container" class="container">
-        <div class="row justify-content-center mt-4">
-            <h1 id="range"></h1>
-        </div>
-        <div class="row justify-content-center mb-4">
-            <button type="button" id="btnNext" class="btn btn-success" style="display:none">Next range</button>
-        </div>
         <div class="row">
             <div class="col" id="tableContainer">
-            </div>
-            <div class="col">
-                <button type="button" id="btnShowPercent" class="btn btn-primary" style="display:none">Show Outline</button>
-                <ul id="outline" style="display:none">
-                    
-                </ul>
             </div>
         </div>
     </div>
@@ -62,34 +50,30 @@ table.range td{
         }
         
         $(function(){
-            $.get('/range0', function succeess(range0){
-                $('#tableContainer').html(range0);
+            $.get('/range', function succeess(range){
+                range = JSON.parse(range)
+                currentRange = $(range.rgHtml);
+                $('#tableContainer').html(range.rgHtml);
                 $('table.range').addClass('table table-bordered table-dark');
+                $('table.range td:empty').html("&Oslash;").addClass("text-dark")
                 worker();
             });
-            $('#btnNext').on('click', function(){
-                worker();
-            })
-            $('#btnShowPercent').on('click', function(){
-                $('#outline').show().html('<li>Combos :' + rangeCombos + '</li><li class="text-primary">Pairs : ' + pairs + '</li><li class="text-success">Suited : ' + suited + '</li><li class="text-info">Offsuit : ' + offsuited + '</li>');
-            })
-            $('#tableContainer').on('click', 'table.range td', function(ev){ 
+            $('#tableContainer').on('click', 'table.range td:not(:empty)', function(ev){ 
                 var col = $(this).closest("td").index();
                 var row = $(this).closest("tr").index();
                 var checkit = currentRange.find('tr').eq(row).find('td').eq(col).html();
-                if(checkit && checkit.length){
-                    if($(this).hasClass('suited'))
-                        $(this).toggleClass('bg-success checked');
-                    if($(this).hasClass('offsuit'))
-                        $(this).toggleClass('bg-info checked');
-                    if($(this).hasClass('pair'))
-                        $(this).toggleClass('bg-primary checked');
-                    if($('table.range td.checked').length === controlSum){
-                        $('#btnShowPercent, #btnNext').show();
-                    }
-                }
-                else{
-                    $(this).toggleClass('bg-danger');
+                var td = $(this);
+                if(checkit && checkit.length > 1){
+                    $.post('/hand-vs-hand', {
+                        h1 : 'TT',
+                        h2 : checkit
+                    }, 'json' ).done(function(data){
+                        data = JSON.parse(data)
+                        if(data[0] < data[1])
+                            td.addClass('bg-danger')
+                        else
+                            td.addClass('bg-success')
+                    });
                 }
             });
         });
