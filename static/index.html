@@ -21,43 +21,48 @@ table.range td{
 
 <body>
     <div id="container" class="container">
-        <div class="row">
+        <div class="row mt-2">
+            <div class="col">
+                <h1 id="hand"></h1>
+            </div>
+            <div class="col">
+                <button id="btnHand" class="btn btn-primary">Next hand</button>
+            </div>
+            <div class="col">
+                <button id="btnRange" class="btn btn-secondary">Next range</button>
+            </div>
+
+        </div>
+        <div class="row mt-2">
             <div class="col" id="tableContainer">
             </div>
         </div>
     </div>
     <script type="text/javascript">
         var currentRange = null;
-        var controlSum = 0;
-        var rangeCombos = 0;
-        var pairs = 0;
-        var suited = 0;
-        var offsuited = 0;
-
-        function worker(){
-            $('#btnNext, #btnShowPercent, #outline').hide();
-            $('table.range td').removeClass('bg-primary checked bg-danger bg-success bg-info');
-            $.get('/range', function(range){
-                range = JSON.parse(range)
-                currentRange = $(range.rgHtml);
-                $('#range').html(range.rgText);
-                controlSum = currentRange.find("td:not(:empty)").length;
-                rangeCombos = range.combos;
-                pairs = range.pairs;
-                suited = range.suited;
-                offsuited = range.offsuited;
-            });
-        }
+        var currentHand = null;
         
-        $(function(){
+        function gen_hand(){
+            $.get('/hand', function success(hand){
+                currentHand = hand;
+                $('#hand').html(currentHand);
+            })
+        }
+        function gen_range(){
             $.get('/range', function succeess(range){
                 range = JSON.parse(range)
                 currentRange = $(range.rgHtml);
                 $('#tableContainer').html(range.rgHtml);
                 $('table.range').addClass('table table-bordered table-dark');
                 $('table.range td:empty').html("&Oslash;").addClass("text-dark")
-                worker();
-            });
+            });            
+        }
+        
+        $(function(){
+            gen_hand();
+            gen_range();
+            $('#btnHand').on('click', gen_hand);
+            $('#btnRange').on('click', gen_range);
             $('#tableContainer').on('click', 'table.range td:not(:empty)', function(ev){ 
                 var col = $(this).closest("td").index();
                 var row = $(this).closest("tr").index();
@@ -65,7 +70,7 @@ table.range td{
                 var td = $(this);
                 if(checkit && checkit.length > 1){
                     $.post('/hand-vs-hand', {
-                        h1 : 'TT',
+                        h1 : currentHand,
                         h2 : checkit
                     }, 'json' ).done(function(data){
                         data = JSON.parse(data)

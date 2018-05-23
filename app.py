@@ -3,10 +3,14 @@ from poker import Range, Combo, Hand
 import random
 import json
 import pbots_calc
+import itertools
+import csv
 
 from encoder import *
 
 app = Flask(__name__)
+
+d = dict()
 
 with open('ranges.txt') as f:
     ranges = f.readlines()
@@ -23,9 +27,9 @@ def serve_range():
     rgObj = RangeWrapper(rgText)
     return json.dumps(rgObj, cls=MyEncoder)
 
-@app.route("/range0")
-def serve_range0():
-    return Range('XX').to_html()
+@app.route("/hand")
+def serve_hand():
+    return str(Hand.make_random())
 
 @app.route('/hand-vs-hand', methods=['POST'])
 def test():
@@ -43,9 +47,34 @@ def test():
 #             #print zip(r.hands, r.ev)
 
 def evalhtoh(h1, h2):
-        calcInput = h1 + ':' + h2
-        r = pbots_calc.calc(calcInput, "", "", 1000000)
-        return r.ev
+        if h1 == h2 :
+            return [0.5, 0.5]
+        h_key = h1 + ':' + h2
+        if d.has_key(h_key) :
+            ev =  d[h_key]
+            return [ev, 1-ev]
+        else:
+            h_key = h2 + ':' + h1
+            ev =  1 - d[h_key]
+            return [ev, 1-ev]
+        
+
+def fill_hu_cache():
+    with open('hu.csv', 'wb') as csvfile:
+        wr = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for c in list(itertools.combinations(list(Hand), 2)):
+            ci = str(c[0]) + ':' + str(c[1])
+            r = pbots_calc.calc(ci, "", "", 1000000)
+            wr.writerow([ci, r.ev[0]])
+
+def read_hu_cache():
+    with open('hu.csv', 'rb') as csvfile:
+        r = csv.reader(csvfile, delimiter=',', quotechar='|')
+        for row in r:
+            d[row[0]] = float(row[1])
+
 
 if __name__ == '__main__':
+    read_hu_cache()
     app.run(debug=True)
+    #fill_hu_cache()
