@@ -27,6 +27,11 @@ def serve_range():
     rgObj = RangeWrapper(rgText)
     return json.dumps(rgObj, cls=MyEncoder)
 
+@app.route("/range_html", methods=['POST'])
+def buildRange():
+    rgObj = RangeWrapper(request.form.get('range'))
+    return json.dumps(rgObj, cls=MyEncoder)
+
 @app.route("/hand")
 def serve_hand():
     return str(Hand.make_random())
