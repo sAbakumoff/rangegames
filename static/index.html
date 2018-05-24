@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game of ranges</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" 
 integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
@@ -24,39 +25,49 @@ table.range td{
 </head>
 
 <body>
-    <div id="container" class="container">
-        <div class="row mt-2">
-            <div class="col text-right">
-                <button class="btn btn-lg btn-outline-primary" id="hand1"></button>
-            </div>
-            <div class="col-1"></div>
-            <div class="col text-left">
-                <button id="hand2" class="btn btn-lg btn-outline-primary"></button>
-            </div>
-        </div>
-        <div class="row mt-2 justify-content-center">
             <div class="alert alert-success" role="alert" id="msgSuccess" style="display:none">
-                <strong>Well done!</strong> The hand you selected is stronger! <a href="#" class="alert-link">Try another</a>
+                <strong>Well done!</strong> ${h1} has about ${eq} equity versus ${h2}.
             </div>            
             <div class="alert alert-danger" role="alert" id="msgFail" style="display:none">
-                <strong>Oh snap!</strong> The hand you selected is weaker! <a href="#" class="alert-link">Try another</a>
-            </div>            
+                <strong>Oh snap!</strong> ${h1} has about ${eq} equity versus ${h2}.
+            </div>       
+
+    <div id="container" class="container">
+        <div class="row mt-2">
+            <div class="col row justify-content-center">
+                <div class="col-1">
+                    <button class="btn btn-lg btn-outline-primary" id="hand1"></button>
+                </div>
+                <div class="col-1">
+                    <button id="hand2" class="btn btn-lg btn-outline-primary"></button>
+                </div>
+                <div class="col-1">
+                    <button class="btn btn-lg btn-secondary" id="btnNext">Next</button>
+                </div>   
+            </div>
+        </div>
+        <div class="row mt-2 justify-content-center" id="info">
+     
+        </div>
+        <div class="row mt-2" class='justify-content-center'>
+            <div class="col row justify-content-center text-success" id="stat" style="display:none">
+            </div>
         </div>
         <div class="row mt-2">
             <div class="col row justify-content-center" id="tableContainer">
             </div>
         </div>
-        <div class="row mt-2 justify-content-center">
-            <div class="col-1">
-                <button class="btn btn-lg btn-secondary" id="btnNext">Skip</button>
-            </div>
-        </div>
+
     </div>
     <script type="text/javascript">
         var hand1  = null;
         var hand2  = null;
+        var total = 0;
+        var answers = 0;
+        var clicked = false;
         function reset(){
-            $('#msgSuccess, #msgFail').hide();
+            clicked = false;
+            $('#info').empty();
         }
         function gen_hands(){
             $.when(
@@ -75,20 +86,37 @@ table.range td{
                      $('table.range td').addClass("border");
                      $("table.range td").addClass('text-muted').filter(function() {
                          return $(this).text() == hand1 || $(this).text() == hand2;
-                     }).removeClass('text-muted').addClass('bg-dark text-white');
+                     }).removeClass('text-muted').addClass('bg-dark text-white').on('click', function(){
+
+                         var h = $(this).text();
+                         if(h===hand1) return evaluate(hand1, hand2);
+                         evaluate(hand2, hand1);
+                     });
                  })
              })  
         }
         function evaluate(h1, h2){
+                         if(clicked) return;
+                         clicked = true;
+            var html = null;
             $.post('/hand-vs-hand', {
                 h1 : h1,
                 h2 : h2
                 }, 'json' ).done(function(data){
+                    total = total + 1;
                     data = JSON.parse(data)
-                    if(data[0] > data[1])
-                        $('#msgSuccess').show();
-                    else
-                        $('#msgFail').show();
+                    if(data[0] > data[1]){
+                        answers++;
+                        html = $('#msgSuccess').html();
+                        html = html.replace('${h1}', h1).replace('${h2}', h2).replace('${eq}', data[0].toFixed(2))
+                        $('#msgSuccess').clone().appendTo("#info").html(html).show();
+                    }
+                    else{
+                        html = $('#msgFail').html();
+                        html = html.replace('${h1}', h1).replace('${h2}', h2).replace('${eq}', data[0].toFixed(2))
+                        $('#msgFail').clone().appendTo('#info').html(html).show();
+                    }
+                    $('#stat').show().html("right answers: " + answers + " out of " + total);
                 });                
         }
         $(function(){
@@ -100,6 +128,7 @@ table.range td{
                 return false;
             });
             $('#hand1').on('click', function(){
+                
                 evaluate(hand1, hand2)
             });
             $('#hand2').on('click', function(){
