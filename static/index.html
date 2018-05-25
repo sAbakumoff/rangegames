@@ -17,6 +17,7 @@ table.range td{
       text-align: center;
       vertical-align: middle;
 }
+.alert {display:inline-block;}
 </style>
 <script
   src="https://code.jquery.com/jquery-3.3.1.min.js"
@@ -25,38 +26,44 @@ table.range td{
 </head>
 
 <body>
-            <div class="alert alert-success" role="alert" id="msgSuccess" style="display:none">
+            <div class="alert alert-success text-center" role="alert" id="msgSuccess" style="display:none">
                 <strong>Well done!</strong> ${h1} has about ${eq} equity versus ${h2}.
             </div>            
-            <div class="alert alert-danger" role="alert" id="msgFail" style="display:none">
+            <div class="alert alert-danger text-center" role="alert" id="msgFail" style="display:none">
                 <strong>Oh snap!</strong> ${h1} has about ${eq} equity versus ${h2}.
             </div>       
 
     <div id="container" class="container">
-        <div class="row mt-2">
-            <div class="col row justify-content-center">
-                <div class="col-1">
-                    <button class="btn btn-lg btn-outline-primary" id="hand1"></button>
-                </div>
-                <div class="col-1">
-                    <button id="hand2" class="btn btn-lg btn-outline-primary"></button>
-                </div>
-                <div class="col-1">
-                    <button class="btn btn-lg btn-secondary" id="btnNext">Next</button>
-                </div>   
+        <div class="row mt-1 justify-content-center" >
+            <div class="col text-center" >
+                <h1>Choose stronger hand</h1>
             </div>
-        </div>
-        <div class="row mt-2 justify-content-center" id="info">
      
         </div>
-        <div class="row mt-2" class='justify-content-center'>
+
+        <div class="row mt-2 justify-content-center" >
+            <div class="col row justify-content-center" id="info">
+            </div>
+     
+        </div>
+        <div class="row mt-2">
+            <div class="col text-center">
+                <div>
+                    <button class="btn btn-lg btn-outline-primary" id="hand1"></button>
+                    <button id="hand2" class="btn btn-lg btn-outline-primary"></button>
+                    <button class="btn btn-lg btn-secondary ml-4" id="btnNext">Next</button>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-1" class='justify-content-center'>
             <div class="col row justify-content-center text-success" id="stat" style="display:none">
             </div>
         </div>
-        <div class="row mt-2">
+        <div class="row mt-2 d-none d-lg-block">
             <div class="col row justify-content-center" id="tableContainer">
             </div>
         </div>
+
 
     </div>
     <script type="text/javascript">
@@ -68,6 +75,7 @@ table.range td{
         function reset(){
             clicked = false;
             $('#info').empty();
+            $('#hand1, #hand2').addClass('btn-outline-primary').removeClass('btn-success btn-danger')
         }
         function gen_hands(){
             $.when(
@@ -83,6 +91,7 @@ table.range td{
                      $('#hand2').html(hand2);
                      range = JSON.parse(range)
                      $('#tableContainer').html(range.rgHtml);
+                     $('table.range tr').addClass('')
                      $('table.range td').addClass("border");
                      $("table.range td").addClass('text-muted').filter(function() {
                          return $(this).text() == hand1 || $(this).text() == hand2;
@@ -110,11 +119,23 @@ table.range td{
                         html = $('#msgSuccess').html();
                         html = html.replace('${h1}', h1).replace('${h2}', h2).replace('${eq}', data[0].toFixed(2))
                         $('#msgSuccess').clone().appendTo("#info").html(html).show();
+                        $("table.range td").filter(function() {
+                         return $(this).text() == h1;
+                        }).removeClass('bg-dark').addClass("bg-success");
+                        $('#hand1, #hand2').filter(function(){
+                            return $(this).text() == h1;
+                        }).removeClass('btn-outline-primary').addClass('btn-success')
                     }
                     else{
                         html = $('#msgFail').html();
                         html = html.replace('${h1}', h1).replace('${h2}', h2).replace('${eq}', data[0].toFixed(2))
                         $('#msgFail').clone().appendTo('#info').html(html).show();
+                        $("table.range td").filter(function() {
+                         return $(this).text() == h1;
+                        }).removeClass('bg-dark').addClass("bg-danger");   
+                         $('#hand1, #hand2').filter(function(){
+                             return $(this).text() == h1;
+                         }).removeClass('btn-outline-primary').addClass('btn-danger')                     
                     }
                     $('#stat').show().html("right answers: " + answers + " out of " + total);
                 });                
@@ -134,6 +155,32 @@ table.range td{
             $('#hand2').on('click', function(){
                 evaluate(hand2, hand1)
             });
+$(document).keydown(function(e) {
+    switch(e.which) {
+        case 37: // left
+        evaluate(hand1, hand2);
+        break;
+
+        case 38: // up
+        break;
+
+        case 39: // right
+        evaluate(hand2, hand1)
+        break;
+
+        case 13 : // enter
+        break;
+
+        case 40: // down
+        reset();
+        gen_hands();
+
+        break;
+
+        default: return; // exit this handler for other keys
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+});            
         });
     </script>
 </body>
