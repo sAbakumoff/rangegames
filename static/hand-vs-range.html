@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game of ranges</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" 
+integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+<style>
+table.range{
+    cursor : pointer;
+    border-collapse:  collapse;
+    empty-cells: show;
+}
+table.board{
+    cursor: pointer;
+    border-collapse:separate;
+}
+table td{
+      text-align: center;
+      vertical-align: middle;
+      width : 25px;
+      height : 25px;
+}
+.selected {
+    color : white;
+}
+.suit-c{
+    background-color: lightgreen;
+}
+.suit-c.selected{
+    background-color: green;
+
+}
+.suit-d{
+    background-color: lightblue;
+}
+.suit-d.selected{
+    background-color: blue;
+}
+.suit-h{
+    background-color: lightcoral;
+}
+.suit-h.selected{
+    background-color : red;
+}
+.suit-s{
+    background-color: lightgray;
+}
+.suit-s.selected{
+    background-color :black;
+}
+.alert {display:inline-block;}
+</style>
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="container" class="container">
+        <div class="row mt-1 justify-content-center" >
+            <div class="col text-center">
+                <h2  id="info">Board : </h2>
+            </div>     
+        </div>
+        <div class="row mt-2">
+            <div class="col row justify-content-center" id="r1Container">
+            </div>
+            <div class="col row justify-content-center" id="board">
+            </div>
+            <div class="col row justify-content-center" id="r2Container">
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var cards = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+        var suits = ['c', 'd', 'h', 's'];
+        function gen_range(container_id){
+            return $.get('/range', function(range){
+                range = JSON.parse(range)
+                $(container_id).html(range.rgHtml);
+                $('table.range td').addClass("border");
+                //$('table.range td:not(:empty).pair').addClass('bg-success');
+                $('table.range td:empty').html('nop').addClass('text-white');
+            })
+        }
+        function fill_board(){
+            var board = '<table class="board">';
+            cards.forEach(function(card){
+                var row = '<tr>';
+                suits.forEach(function(suit){
+                    row += "<td class='border suit-" + suit + "'>" + card + suit + "</td>";
+                })
+                row+="</tr>";
+                board += row;
+            })
+            board += "</table>";
+            $('#board').html(board).on('click', 'td', function(){
+                $(this).toggleClass('selected');
+                var b = ' ';
+                $('td.selected').each(function(){
+                    b = b + ' ' + $(this).text();
+                })
+                $('#info').text("Board :" + b);
+            });
+        }
+        $(function(){
+            $.when(gen_range('#r1Container'), gen_range('#r2Container')).then(function(){
+                fill_board();
+            });
+        });
+    </script>
+</body>
+</html>

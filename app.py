@@ -19,7 +19,7 @@ ranges = [x.strip() for x in ranges]
 
 @app.route("/")
 def serve_index():
-    return app.send_static_file("index.html")
+    return app.send_static_file("hand-vs-range.html")
 
 @app.route("/range")
 def serve_range():
