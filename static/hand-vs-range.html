@@ -67,8 +67,14 @@ crossorigin="anonymous"></script>
     <div id="container" class="container">
         <div class="row mt-1 justify-content-center" >
             <div class="col text-center">
-                <h2  id="info">Board : </h2>
+                <h2 id="r1eq"></h2>
+            </div>
+            <div class="col text-center">
+                <h2 id="info"></h2>
             </div>     
+            <div class="col text-center">
+                <h2 id="r2eq"></h2>
+            </div>
         </div>
         <div class="row mt-2">
             <div class="col row justify-content-center" id="r1Container">
@@ -113,7 +119,7 @@ crossorigin="anonymous"></script>
                 $(container_id).html(range.rgHtml);
                 $('table.range td').addClass("border");
                 //$('table.range td:not(:empty).pair').addClass('bg-success');
-                $('table.range td:empty').html('nop').addClass('text-white');
+                $('table.range td:empty').html('nop').addClass('text-white empty');
             })
         }
         function fill_board(){
@@ -153,21 +159,23 @@ crossorigin="anonymous"></script>
                     
                     $('#wholeRange table.range td').addClass("border")
 
-                    function selectorJob(hand){
+                    function selectorJob(hand, uncheck){
                         var txt = $(hand).text();
-                        if(selectedRange[txt]){
+                        if(selectedRange[txt] && uncheck){
                             delete selectedRange[txt]
+                            $(hand).removeClass('bg-success');
                         }
                         else{
                             selectedRange[txt] = 1;
+                            $(hand).addClass('bg-success');
                         }
-                        $(hand).toggleClass('bg-success');
+                        
                     }
                     
                     $('#wholeRange table.range').off('click').on({
                         'mousedown' : function(){
                             mouseDown = true;
-                            selectorJob(this);
+                            selectorJob(this, true);
                             return false;
                         },
                         'mouseup' : function(){
@@ -194,6 +202,28 @@ crossorigin="anonymous"></script>
                 $('#r2Selector').on('click', function(){
                     activeRange = '#r2Container';
                     $('#rangeModal').modal('show');
+                });
+                $('#btnEval').on('click', function(){
+                    var r1 = [], r2 = [],b=[];
+                    $('#r1Container td:not(.empty)').each(function(){
+                        r1.push($(this).text())
+                    })
+                    $('#r2Container td:not(.empty)').each(function(){
+                        r2.push($(this).text())
+                    })
+                    $('#board td.selected').each(function(){
+                        b.push($(this).text())
+                    })
+                    $.post('/evaluate', {
+                        r1 : r1.join(','),
+                        r2 : r2.join(','),
+                        board : b.join('')
+                    }, function success(data){
+                        data = JSON.parse(data);
+                        $('#r1eq').html(data[0].toFixed(2));
+                        $('#r2eq').html(data[1].toFixed(2));
+                    })
+
                 });
             });
 

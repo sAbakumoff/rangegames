@@ -42,6 +42,15 @@ def test():
      h2 = request.form.get('h2')
      return json.dumps(evalhtoh(h1, h2))
 
+@app.route('/evaluate', methods=['POST'])
+def evaluate_worker():
+     r1 = request.form.get('r1')
+     r2 = request.form.get('r2')
+     board = request.form.get('board')
+     res = pbots_calc.calc(r1 + ":" + r2, board, "", 1000000)
+     return json.dumps(res.ev)
+
+
 # def test(rangeTxt, handTxt):
 #      rangeObj = Range(rangeTxt)
 #      for h in rangeObj.hands:
