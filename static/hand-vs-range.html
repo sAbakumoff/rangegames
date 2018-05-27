@@ -14,7 +14,7 @@ table.range{
 }
 table.board{
     cursor: pointer;
-    border-collapse:separate;
+    border-collapse:collapse;
 }
 table td{
       text-align: center;
@@ -53,9 +53,15 @@ table td{
 .alert {display:inline-block;}
 </style>
 <script
-  src="https://code.jquery.com/jquery-3.3.1.min.js"
-  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-  crossorigin="anonymous"></script>
+src="https://code.jquery.com/jquery-3.3.1.min.js"
+integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" 
+integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" 
+crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" 
+integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" 
+crossorigin="anonymous"></script>
 </head>
 <body>
     <div id="container" class="container">
@@ -72,12 +78,37 @@ table td{
             <div class="col row justify-content-center" id="r2Container">
             </div>
         </div>
+        <div class="row mt-2">
+            <div class="col text-center">
+                <button type="button" id="r1Selector" class="btn btn-secondary">
+                    Range Selector    
+                </button>                
+            </div>
+            <div class="col text-center">
+                <button type="button" id="btnEval" class="btn btn-primary">
+                    Evaluate    
+                </button>                                
+            </div>
+            <div class="col text-center">
+                <button type="button" id="r2Selector" class="btn btn-secondary">
+                    Range Selector    
+                </button>                
+            </div>
+        </div>
     </div>
     <script type="text/javascript">
         var cards = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
         var suits = ['c', 'd', 'h', 's'];
-        function gen_range(container_id){
-            return $.get('/range', function(range){
+        var wholeRangeHtml = null;
+        function fill_whole_range(){
+            return $.post('/range_html', { range : 'XX' }, function success(range){
+                range = JSON.parse(range)
+                wholeRangeHtml = range.rgHtml;
+
+            });
+        }
+        function gen_range(container_id, rangeTxt){
+            return $.post('/range_html', {range : rangeTxt}, function(range){
                 range = JSON.parse(range)
                 $(container_id).html(range.rgHtml);
                 $('table.range td').addClass("border");
@@ -106,10 +137,88 @@ table td{
             });
         }
         $(function(){
-            $.when(gen_range('#r1Container'), gen_range('#r2Container')).then(function(){
+            var selectedRange = null;
+            var mouseDown = false;
+            var activeRange = null;
+
+            $.when(gen_range('#r1Container', ''), gen_range('#r2Container', ''), fill_whole_range()).then(function(){
+                
                 fill_board();
+                
+                $('#rangeModal').on('shown.bs.modal', function(){
+                    selectedRange = {}
+
+                    
+                    $('#wholeRange').html(wholeRangeHtml);
+                    
+                    $('#wholeRange table.range td').addClass("border")
+
+                    function selectorJob(hand){
+                        var txt = $(hand).text();
+                        if(selectedRange[txt]){
+                            delete selectedRange[txt]
+                        }
+                        else{
+                            selectedRange[txt] = 1;
+                        }
+                        $(hand).toggleClass('bg-success');
+                    }
+                    
+                    $('#wholeRange table.range').off('click').on({
+                        'mousedown' : function(){
+                            mouseDown = true;
+                            selectorJob(this);
+                            return false;
+                        },
+                        'mouseup' : function(){
+                            mouseDown = false;
+                            return false;
+                        },
+                        'mouseenter' : function(){
+                            if(mouseDown){
+                                selectorJob(this);                            
+                            }
+                            return false;
+                        }
+                    }, 'td');
+                });
+                $('#rangeModal').on('hidden.bs.modal', function(){
+                    var rg = Object.keys(selectedRange).join(',');
+                    gen_range(activeRange, rg);
+                });
+                
+                $('#r1Selector').on('click', function(){
+                    activeRange = '#r1Container';
+                    $('#rangeModal').modal('show');
+                });
+                $('#r2Selector').on('click', function(){
+                    activeRange = '#r2Container';
+                    $('#rangeModal').modal('show');
+                });
             });
+
         });
     </script>
+
+<div class="modal fade" id="rangeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Select range</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row" id="wholeRange">
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+        </div>
+      </div>
+    </div>
+</div>    
 </body>
 </html>
