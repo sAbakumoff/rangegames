@@ -67,12 +67,14 @@ crossorigin="anonymous"></script>
     <div id="container" class="container">
         <div class="row mt-1 justify-content-center" >
             <div class="col text-center">
+                <span class="small" id="r1Text"></span>
                 <h2 id="r1eq"></h2>
             </div>
             <div class="col text-center">
                 <h2 id="info"></h2>
             </div>     
             <div class="col text-center">
+                <span class="small" id="r2Text"></span>
                 <h2 id="r2eq"></h2>
             </div>
         </div>
@@ -85,22 +87,55 @@ crossorigin="anonymous"></script>
             </div>
         </div>
         <div class="row mt-2">
-            <div class="col text-center">
-                <button type="button" id="r1Selector" class="btn btn-secondary">
-                    Range Selector    
-                </button>                
+            <div class="col justify-content-center row">
+                <div class="col">
+                    <button type="button" id="r1Selector" class="btn btn-secondary">
+                        Range Selector    
+                    </button>
+                </div>
+                <div class="col">
+                    <div class="dropdown" id="r1Actions">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Action...
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="#" data-action="mute">Mute</a>
+                            <a class="dropdown-item" href="#" data-action="unmute">Unmute</a>
+                            <a class="dropdown-item" href="#" data-action="mark-primary">Mark primary</a>
+                            <a class="dropdown-item" href="#" data-action="mark-success">Mark success</a>
+                            <a class="dropdown-item" href="#" data-action="mark-danger">Mark danger</a>
+                            </div>
+                    </div>           
+                </div>                     
             </div>
             <div class="col text-center">
                 <button type="button" id="btnEval" class="btn btn-primary">
                     Evaluate    
                 </button>                                
             </div>
-            <div class="col text-center">
+            <div class="col row justify-content-center">
+                <div class="col">
                 <button type="button" id="r2Selector" class="btn btn-secondary">
                     Range Selector    
-                </button>                
+                </button>        
+                </div>
+                <div class="col">
+                        <div class="dropdown" id="r2Actions">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Action...
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="#" data-action="mute">Mute</a>
+                                <a class="dropdown-item" href="#" data-action="unmute">Unmute</a>
+                                <a class="dropdown-item" href="#" data-action="mark-primary">Mark primary</a>
+                                <a class="dropdown-item" href="#" data-action="mark-success">Mark success</a>
+                                <a class="dropdown-item" href="#" data-action="mark-danger">Mark danger</a>
+                                </div>
+                        </div>           
+                    </div>                                        
             </div>
         </div>
+
     </div>
     <script type="text/javascript">
         var cards = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
@@ -136,11 +171,33 @@ crossorigin="anonymous"></script>
             $('#board').html(board).on('click', 'td', function(){
                 $(this).toggleClass('selected');
                 var b = ' ';
-                $('td.selected').each(function(){
+                $('#board td.selected').each(function(){
                     b = b + ' ' + $(this).text();
                 })
                 $('#info').text("Board :" + b);
             });
+        }
+        function action(containerId, actionId){
+            $(containerId + ' td.selected').removeClass('bg-info bg-success bg-primary bg-danger');         
+            if(actionId === 'mute'){
+                $(containerId + ' td.selected').addClass('text-muted muted');
+            }
+            if(actionId === 'unmute'){
+                $(containerId + ' td.selected').removeClass('text-muted muted');
+            }            
+            if(actionId === 'mute-others'){
+                $(containerId + ' td:not(.selected)').addClass('text-muted');
+            }
+            if(actionId === 'mark-success'){
+                $(containerId + ' td.selected').addClass('bg-success');
+            }
+            if(actionId === 'mark-primary'){
+                $(containerId + ' td.selected').addClass('bg-primary');
+            }
+            if(actionId === 'mark-danger'){
+                $(containerId + ' td.selected').addClass('bg-danger');
+            }            
+            $(containerId + ' td.selected').removeClass('selected');
         }
         $(function(){
             var selectedRange = null;
@@ -148,6 +205,18 @@ crossorigin="anonymous"></script>
             var activeRange = null;
 
             $.when(gen_range('#r1Container', ''), gen_range('#r2Container', ''), fill_whole_range()).then(function(){
+                $('#r1Actions').on('click', 'a', function(ev){
+                    action('#r1Container', $(this).attr('data-action'));
+                    ev.preventDefault();
+                })
+                $('#r2Actions').on('click', 'a', function(ev){
+                    action('#r2Container', $(this).attr('data-action'));
+                    ev.preventDefault();
+                })
+
+                $('#r1Container, #r2Container').on('click', 'td', function(){
+                    $(this).addClass('selected bg-info');
+                })
                 
                 fill_board();
                 
@@ -205,15 +274,18 @@ crossorigin="anonymous"></script>
                 });
                 $('#btnEval').on('click', function(){
                     var r1 = [], r2 = [],b=[];
-                    $('#r1Container td:not(.empty)').each(function(){
+                    $('#r1Container td:not(.empty):not(.muted)').each(function(){
                         r1.push($(this).text())
                     })
-                    $('#r2Container td:not(.empty)').each(function(){
+                    $('#r2Container td:not(.empty):not(.muted)').each(function(){
                         r2.push($(this).text())
                     })
                     $('#board td.selected').each(function(){
                         b.push($(this).text())
                     })
+                    $('#r1Text').html(r1.join(','));
+                    $('#r2Text').html(r2.join(','));
+
                     $.post('/evaluate', {
                         r1 : r1.join(','),
                         r2 : r2.join(','),

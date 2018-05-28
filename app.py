@@ -90,5 +90,5 @@ def read_hu_cache():
 
 if __name__ == '__main__':
     read_hu_cache()
-    app.run(debug=True)
+    app.run(debug=True, host="10.254.12.7")
     #fill_hu_cache()
