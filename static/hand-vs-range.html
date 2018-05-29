@@ -88,25 +88,10 @@ crossorigin="anonymous"></script>
         </div>
         <div class="row mt-2">
             <div class="col justify-content-center row">
-                <div class="col">
+
                     <button type="button" id="r1Selector" class="btn btn-secondary">
                         Range Selector    
                     </button>
-                </div>
-                <div class="col">
-                    <div class="dropdown" id="r1Actions">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Action...
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="#" data-action="mute">Mute</a>
-                            <a class="dropdown-item" href="#" data-action="unmute">Unmute</a>
-                            <a class="dropdown-item" href="#" data-action="mark-primary">Mark primary</a>
-                            <a class="dropdown-item" href="#" data-action="mark-success">Mark success</a>
-                            <a class="dropdown-item" href="#" data-action="mark-danger">Mark danger</a>
-                            </div>
-                    </div>           
-                </div>                     
             </div>
             <div class="col text-center">
                 <button type="button" id="btnEval" class="btn btn-primary">
@@ -114,25 +99,9 @@ crossorigin="anonymous"></script>
                 </button>                                
             </div>
             <div class="col row justify-content-center">
-                <div class="col">
-                <button type="button" id="r2Selector" class="btn btn-secondary">
-                    Range Selector    
-                </button>        
-                </div>
-                <div class="col">
-                        <div class="dropdown" id="r2Actions">
-                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Action...
-                                </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a class="dropdown-item" href="#" data-action="mute">Mute</a>
-                                <a class="dropdown-item" href="#" data-action="unmute">Unmute</a>
-                                <a class="dropdown-item" href="#" data-action="mark-primary">Mark primary</a>
-                                <a class="dropdown-item" href="#" data-action="mark-success">Mark success</a>
-                                <a class="dropdown-item" href="#" data-action="mark-danger">Mark danger</a>
-                                </div>
-                        </div>           
-                    </div>                                        
+                    <button type="button" id="r2Selector" class="btn btn-secondary">
+                        Range Selector    
+                    </button>        
             </div>
         </div>
 
@@ -174,31 +143,50 @@ crossorigin="anonymous"></script>
                 $('#board td.selected').each(function(){
                     b = b + ' ' + $(this).text();
                 })
-                $('#info').text("Board :" + b);
+                //$('#info').text("Board :" + b);
             });
         }
-        function action(containerId, actionId){
-            $(containerId + ' td.selected').removeClass('bg-info bg-success bg-primary bg-danger');         
-            if(actionId === 'mute'){
-                $(containerId + ' td.selected').addClass('text-muted muted');
+
+        function getHeatColor(val) {
+            var perRed;
+            var perGreen;
+            var maxValue = 100;
+            var minValue = 0;
+ 
+            var ratio = 1 / (maxValue - minValue);
+            var finalValue = (val - minValue) * ratio;
+ 
+            if (finalValue == 0.5) {
+                perRed = 1;
+                perGreen = 1;
             }
-            if(actionId === 'unmute'){
-                $(containerId + ' td.selected').removeClass('text-muted muted');
-            }            
-            if(actionId === 'mute-others'){
-                $(containerId + ' td:not(.selected)').addClass('text-muted');
+            else if (finalValue > 0.5) {
+                perRed = ( 1 - finalValue)*2;
+                perGreen = 1;
             }
-            if(actionId === 'mark-success'){
-                $(containerId + ' td.selected').addClass('bg-success');
+            else {
+                perGreen = finalValue*2;
+                perRed =  1;
             }
-            if(actionId === 'mark-primary'){
-                $(containerId + ' td.selected').addClass('bg-primary');
+ 
+            var red = Math.round(255 * perRed);
+            var green = Math.round(255 * perGreen);
+    
+            var gString = green.toString(16);
+            var rString = red.toString(16);
+    
+            if (gString.length == 1) {
+                gString = '0' + gString;
             }
-            if(actionId === 'mark-danger'){
-                $(containerId + ' td.selected').addClass('bg-danger');
-            }            
-            $(containerId + ' td.selected').removeClass('selected');
-        }
+    
+            if (rString.length == 1) {
+                rString = rString + '0';
+            }
+    
+            var color = '#' + rString + gString + '00';
+    
+            return color;
+        }       
         $(function(){
             var selectedRange = null;
             var mouseDown = false;
@@ -283,18 +271,47 @@ crossorigin="anonymous"></script>
                     $('#board td.selected').each(function(){
                         b.push($(this).text())
                     })
-                    $('#r1Text').html(r1.join(','));
-                    $('#r2Text').html(r2.join(','));
 
-                    $.post('/evaluate', {
-                        r1 : r1.join(','),
-                        r2 : r2.join(','),
-                        board : b.join('')
-                    }, function success(data){
-                        data = JSON.parse(data);
-                        $('#r1eq').html(data[0].toFixed(2));
-                        $('#r2eq').html(data[1].toFixed(2));
-                    })
+                    r1.forEach(function(r1hand){
+                            $.post('/evaluate', {
+                            r1 : r1hand,
+                            r2 : r2.join(','),
+                            board : b.join('')
+                        }, function success(data){
+                            data = JSON.parse(data);
+                            $('#r1Container td').filter(function() {
+                                return $(this).text() == r1hand;
+                            }).attr('title',  (data[0] * 100).toFixed(2) + '%')
+                            .attr('data-toggle', 'tooltip').tooltip({})
+                            .css('background-color', function(){
+                                var pos = (data[0] * 100).toFixed(2);
+                                var col = getHeatColor(pos);
+                                console.log(col);
+                                return col;
+                            });
+                        });                        
+                    });
+
+                    r2.forEach(function(r2hand){
+                            $.post('/evaluate', {
+                            r1 : r2hand,
+                            r2 : r1.join(','),
+                            board : b.join('')
+                        }, function success(data){
+                            data = JSON.parse(data);
+                            $('#r2Container td').filter(function() {
+                                return $(this).text() == r2hand;
+                            }).attr('title',  (data[0] * 100).toFixed(2) + '%')
+                            .attr('data-toggle', 'tooltip').tooltip({})
+                            .css('background-color', function(){
+                                var pos = (data[0] * 100).toFixed(2);
+                                var col = getHeatColor(pos);
+                                console.log(col);
+                                return col;
+                            });
+                        });                        
+                    });
+
 
                 });
             });
