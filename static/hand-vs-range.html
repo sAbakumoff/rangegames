@@ -12,6 +12,10 @@ table.range{
     border-collapse:  collapse;
     empty-cells: show;
 }
+table.heatmap{
+    border-collapse: collapse;
+}
+
 table.board{
     cursor: pointer;
     border-collapse:collapse;
@@ -104,6 +108,12 @@ crossorigin="anonymous"></script>
                     </button>        
             </div>
         </div>
+        <div class="row mt-2">
+            <div class="col"></div>
+            <div class="col row justify-content-center" id="heatmap">
+            </div>
+            <div class="col"></div>
+        </div>
 
     </div>
     <script type="text/javascript">
@@ -126,6 +136,22 @@ crossorigin="anonymous"></script>
                 $('table.range td:empty').html('nop').addClass('text-white empty');
             })
         }
+
+        function fill_heatmap(){
+            var hm = '<table class="heatmap">';
+            suits.forEach(function(suit){
+                var row = '<tr>';
+                cards.forEach(function(card){
+                    row += "<td class='border'>" + card + suit + "</td>";
+                })
+                row+="</tr>";
+                hm += row;
+            })
+            hm += "</table>";
+            $('#heatmap').html(hm);     
+        }
+
+
         function fill_board(){
             var board = '<table class="board">';
             cards.forEach(function(card){
@@ -203,10 +229,12 @@ crossorigin="anonymous"></script>
                 })
 
                 $('#r1Container, #r2Container').on('click', 'td', function(){
-                    $(this).addClass('selected bg-info');
+                    //$(this).addClass('selected bg-info');
+                    $(this).css('background-color', "").toggleClass('muted text-muted');
                 })
                 
                 fill_board();
+                fill_heatmap();
                 
                 $('#rangeModal').on('shown.bs.modal', function(){
                     selectedRange = {}
@@ -272,6 +300,16 @@ crossorigin="anonymous"></script>
                         b.push($(this).text())
                     })
 
+                    $.post('/evaluate', {
+                        r1 : r1.join(','),
+                        r2 : r2.join(','),
+                        board : b.join('')
+                    }, function  success(data){
+                        data = JSON.parse(data);
+                        $('#r1eq').text((data[0] * 100).toFixed(2) + '%');
+                        $('#r2eq').text((data[1] * 100).toFixed(2) + '%');
+                    });
+
                     r1.forEach(function(r1hand){
                             $.post('/evaluate', {
                             r1 : r1hand,
@@ -286,7 +324,7 @@ crossorigin="anonymous"></script>
                             .css('background-color', function(){
                                 var pos = (data[0] * 100).toFixed(2);
                                 var col = getHeatColor(pos);
-                                console.log(col);
+                                //console.log(col);
                                 return col;
                             });
                         });                        
@@ -311,8 +349,6 @@ crossorigin="anonymous"></script>
                             });
                         });                        
                     });
-
-
                 });
             });
 
