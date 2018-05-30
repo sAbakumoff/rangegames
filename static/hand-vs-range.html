@@ -299,6 +299,27 @@ crossorigin="anonymous"></script>
                     $('#board td.selected').each(function(){
                         b.push($(this).text())
                     })
+                    $('#heatmap td').each(function(){
+                        var card = $(this).text();
+                        var turn = b.slice();
+                        (function(card, turn){
+                            if($.inArray(card, turn) < 0){
+                                turn.push(card);
+                                $.post('/evaluate', {
+                                    r1 : r1.join(','),
+                                    r2 : r2.join(','),
+                                    board : turn.join('')
+                                }, function  success(data){
+                                    data = JSON.parse(data);
+                                    var pos = (data[0] * 100).toFixed(2);
+                                    var col = getHeatColor(pos);
+                                    $('#heatmap td').filter(function(){
+                                        return $(this).text() == card;
+                                    }).css('background-color', col);
+                                });
+                            }
+                        })(card, turn);
+                    })
 
                     $.post('/evaluate', {
                         r1 : r1.join(','),
